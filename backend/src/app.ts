@@ -10,7 +10,6 @@ import path from 'path'
 import { DB_ADDRESS } from './config'
 import { doubleCsrfProtection } from './middlewares/csrf'
 import errorHandler from './middlewares/error-handler'
-import rateLimiter from './middlewares/rate-limit'
 import rejectMongoQuery from './middlewares/reject-mongo-query'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
@@ -39,7 +38,6 @@ const app = express()
 mongoose.set('sanitizeFilter', true)
 
 app.use(helmet())
-app.use(rateLimiter)
 app.use(cookieParser())
 app.use(cors(corsOptions))
 app.use(serveStatic(path.join(__dirname, 'public')))
