@@ -81,7 +81,7 @@ const updateProduct = async (
 ) => {
     try {
         const { productId } = req.params
-        const { image } = req.body
+        const { image, title, category, description, price } = req.body
 
         // Переносим картинку из временной папки
         if (image) {
@@ -92,15 +92,26 @@ const updateProduct = async (
             )
         }
 
+        const update: Record<string, unknown> = {}
+        if (title !== undefined) {
+            update.title = title
+        }
+        if (category !== undefined) {
+            update.category = category
+        }
+        if (description !== undefined) {
+            update.description = description
+        }
+        if (price !== undefined) {
+            update.price = price || null
+        }
+        if (image !== undefined) {
+            update.image = image
+        }
+
         const product = await Product.findByIdAndUpdate(
             productId,
-            {
-                $set: {
-                    ...req.body,
-                    price: req.body.price ? req.body.price : null,
-                    image: req.body.image ? req.body.image : undefined,
-                },
-            },
+            { $set: update },
             { runValidators: true, new: true }
         ).orFail(() => new NotFoundError('Нет товара по заданному id'))
         return res.send(product)

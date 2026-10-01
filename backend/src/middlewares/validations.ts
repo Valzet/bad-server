@@ -72,19 +72,48 @@ export const validateProductBody = celebrate({
 })
 
 export const validateProductUpdateBody = celebrate({
-    body: Joi.object().keys({
-        title: Joi.string().min(2).max(30).messages({
-            'string.min': 'Минимальная длина поля "name" - 2',
-            'string.max': 'Максимальная длина поля "name" - 30',
-        }),
-        image: Joi.object().keys({
-            fileName: Joi.string().required(),
-            originalName: Joi.string().required(),
-        }),
-        category: Joi.string(),
-        description: Joi.string(),
-        price: Joi.number().allow(null),
-    }),
+    body: Joi.object()
+        .keys({
+            title: Joi.string().min(2).max(30).messages({
+                'string.min': 'Минимальная длина поля 2',
+                'string.max': 'Максимальная длина поля 30',
+            }),
+            image: Joi.object().keys({
+                fileName: Joi.string().required(),
+                originalName: Joi.string().required(),
+            }),
+            category: Joi.string(),
+            description: Joi.string(),
+            price: Joi.number().allow(null),
+        })
+        .min(1),
+})
+
+export const validateUpdateUserBody = celebrate({
+    body: Joi.object()
+        .keys({
+            name: Joi.string().min(2).max(30).messages({
+                'string.min': 'Минимальная длина поля 2',
+                'string.max': 'Максимальная длина поля 30',
+            }),
+            email: Joi.string().email().message('Нужен валидный email'),
+            password: Joi.string().min(6).messages({
+                'string.min': 'Минимальная длина поля 6',
+            }),
+        })
+        .min(1),
+})
+
+export const validateUpdateCustomerBody = celebrate({
+    body: Joi.object()
+        .keys({
+            name: Joi.string().min(2).max(30).messages({
+                'string.min': 'Минимальная длина поля 2',
+                'string.max': 'Максимальная длина поля 30',
+            }),
+            phone: Joi.string().pattern(phoneRegExp),
+        })
+        .min(1),
 })
 
 export const validateObjId = celebrate({
