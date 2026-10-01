@@ -7,6 +7,7 @@ import Product, { IProduct } from '../models/product'
 import User from '../models/user'
 import escapeRegExp from '../utils/escapeRegExp'
 import { buildSort, parseLimit, parsePage } from '../utils/pagination'
+import sanitizePlainText from '../utils/sanitizeHtml'
 
 const ORDER_SORT_FIELDS = [
     'createdAt',
@@ -329,7 +330,7 @@ export const createOrder = async (
             payment,
             phone,
             email,
-            comment,
+            comment: comment ? sanitizePlainText(comment) : '',
             customer: userId,
             deliveryAddress: address,
         })

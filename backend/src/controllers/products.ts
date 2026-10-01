@@ -8,6 +8,7 @@ import NotFoundError from '../errors/not-found-error'
 import Product from '../models/product'
 import movingFile from '../utils/movingFile'
 import { parseLimit, parsePage } from '../utils/pagination'
+import sanitizeProductDescription from '../utils/sanitizeProductDescription'
 
 // GET /product
 const getProducts = async (req: Request, res: Response, next: NextFunction) => {
@@ -55,7 +56,7 @@ const createProduct = async (
         }
 
         const product = await Product.create({
-            description,
+            description: sanitizeProductDescription(description),
             image,
             category,
             price,
@@ -103,7 +104,7 @@ const updateProduct = async (
             update.category = category
         }
         if (description !== undefined) {
-            update.description = description
+            update.description = sanitizeProductDescription(description)
         }
         if (price !== undefined) {
             update.price = price || null
