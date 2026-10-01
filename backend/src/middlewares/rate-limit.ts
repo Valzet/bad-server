@@ -20,6 +20,7 @@ const rateLimiter: RequestHandler =
               standardHeaders: true,
               legacyHeaders: false,
               message: { message: 'Слишком много запросов' },
+              skip: (req) => req.path.startsWith('/auth'),
           })
         : disabledMiddleware
 
