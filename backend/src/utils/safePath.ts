@@ -16,3 +16,7 @@ export function resolvePathWithinBase(
 
     return resolved
 }
+
+export function safeBasename(filePath: string): string {
+    return path.basename(filePath.replace(/\\/g, '/'))
+}
