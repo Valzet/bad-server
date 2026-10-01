@@ -12,7 +12,7 @@ const cookieOptions: CookieOptions = {
 
 const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
     getSecret: () => CSRF_SECRET,
-    cookieName: 'csrfToken',
+    cookieName: '_csrf',
     cookieOptions,
     getSessionIdentifier: (req) =>
         req.headers.authorization ?? req.ip ?? 'anonymous',

@@ -1,4 +1,4 @@
-export const MAX_PAGE_LIMIT = 50
+export const MAX_PAGE_LIMIT = 10
 
 export function parsePage(value: unknown, fallback = 1): number {
     const page = Number(value)
