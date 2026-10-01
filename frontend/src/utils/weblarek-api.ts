@@ -18,6 +18,23 @@ import {
 } from '@types'
 import { getCookie, setCookie } from './cookie'
 
+let csrfToken: string | undefined
+
+async function ensureCsrfToken(baseUrl: string): Promise<string> {
+    if (csrfToken) {
+        return csrfToken
+    }
+
+    const response = await fetch(`${baseUrl}/auth/csrf`, {
+        method: 'GET',
+        credentials: 'include',
+    })
+
+    const data = (await response.json()) as { csrfToken: string }
+    csrfToken = data.csrfToken
+    return csrfToken
+}
+
 export const enum RequestStatus {
     Idle = 'idle',
     Loading = 'loading',
@@ -55,9 +72,21 @@ class Api {
 
     protected async request<T>(endpoint: string, options: RequestInit) {
         try {
+            const method = (options.method ?? 'GET').toUpperCase()
+            const headers = new Headers({
+                ...(this.options.headers as Record<string, string>),
+                ...(options.headers as Record<string, string>),
+            })
+
+            if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+                headers.set('x-csrf-token', await ensureCsrfToken(this.baseUrl))
+            }
+
             const res = await fetch(`${this.baseUrl}${endpoint}`, {
                 ...this.options,
                 ...options,
+                credentials: options.credentials ?? 'include',
+                headers,
             })
             return await this.handleResponse<T>(res)
         } catch (error) {
