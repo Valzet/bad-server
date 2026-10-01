@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import 'dotenv/config'
 import express, { json, urlencoded } from 'express'
+import mongoSanitize from 'express-mongo-sanitize'
 import mongoose from 'mongoose'
 import path from 'path'
 import { DB_ADDRESS } from './config'
@@ -12,6 +13,8 @@ import routes from './routes'
 
 const { PORT = 3000 } = process.env
 const app = express()
+
+mongoose.set('sanitizeFilter', true)
 
 app.use(cookieParser())
 
@@ -23,6 +26,7 @@ app.use(serveStatic(path.join(__dirname, 'public')))
 
 app.use(urlencoded({ extended: true }))
 app.use(json())
+app.use(mongoSanitize())
 
 app.options('*', cors())
 app.use(routes)
