@@ -1,35 +1,63 @@
 import { errors } from 'celebrate'
 import cookieParser from 'cookie-parser'
-import cors from 'cors'
+import cors, { CorsOptions } from 'cors'
 import 'dotenv/config'
 import express, { json, urlencoded } from 'express'
+import mongoSanitize from 'express-mongo-sanitize'
+import helmet from 'helmet'
 import mongoose from 'mongoose'
 import path from 'path'
 import { DB_ADDRESS } from './config'
+import { doubleCsrfProtection } from './middlewares/csrf'
 import errorHandler from './middlewares/error-handler'
+import rejectMongoQuery from './middlewares/reject-mongo-query'
 import serveStatic from './middlewares/serverStatic'
 import routes from './routes'
 
-const { PORT = 3000 } = process.env
+const { PORT = 3000, ORIGIN_ALLOW = 'http://localhost' } = process.env
+
+const allowedOrigins = ORIGIN_ALLOW.split(',').map((item) => item.trim())
+
+const corsOptions: CorsOptions = {
+    origin(origin, callback) {
+        if (!origin) {
+            callback(null, allowedOrigins[0] ?? true)
+            return
+        }
+        if (allowedOrigins.includes(origin)) {
+            callback(null, true)
+            return
+        }
+        callback(new Error('Not allowed by CORS'))
+    },
+    credentials: true,
+}
+
 const app = express()
 
+mongoose.set('sanitizeFilter', true)
+
+app.use(helmet())
 app.use(cookieParser())
-
-app.use(cors())
-// app.use(cors({ origin: ORIGIN_ALLOW, credentials: true }));
-// app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(cors(corsOptions))
 app.use(serveStatic(path.join(__dirname, 'public')))
+app.use(urlencoded({ extended: true, limit: '10kb' }))
+app.use(json({ limit: '10kb' }))
+app.use(rejectMongoQuery)
+app.use(mongoSanitize())
 
-app.use(urlencoded({ extended: true }))
-app.use(json())
+app.use((req, res, next) => {
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+        next()
+        return
+    }
+    doubleCsrfProtection(req, res, next)
+})
 
-app.options('*', cors())
+app.options('*', cors(corsOptions))
 app.use(routes)
 app.use(errors())
 app.use(errorHandler)
-
-// eslint-disable-next-line no-console
 
 const bootstrap = async () => {
     try {

@@ -7,25 +7,29 @@ import ConflictError from '../errors/conflict-error'
 import NotFoundError from '../errors/not-found-error'
 import Product from '../models/product'
 import movingFile from '../utils/movingFile'
+import { parseLimit, parsePage } from '../utils/pagination'
+import sanitizeProductDescription from '../utils/sanitizeProductDescription'
 
 // GET /product
 const getProducts = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { page = 1, limit = 5 } = req.query
+        const pageNumber = parsePage(page)
+        const pageLimit = parseLimit(limit, 5)
         const options = {
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (pageNumber - 1) * pageLimit,
+            limit: pageLimit,
         }
         const products = await Product.find({}, null, options)
         const totalProducts = await Product.countDocuments({})
-        const totalPages = Math.ceil(totalProducts / Number(limit))
+        const totalPages = Math.ceil(totalProducts / pageLimit)
         return res.send({
             items: products,
             pagination: {
                 totalProducts,
                 totalPages,
-                currentPage: Number(page),
-                pageSize: Number(limit),
+                currentPage: pageNumber,
+                pageSize: pageLimit,
             },
         })
     } catch (err) {
@@ -52,7 +56,7 @@ const createProduct = async (
         }
 
         const product = await Product.create({
-            description,
+            description: sanitizeProductDescription(description),
             image,
             category,
             price,
@@ -81,7 +85,7 @@ const updateProduct = async (
 ) => {
     try {
         const { productId } = req.params
-        const { image } = req.body
+        const { image, title, category, description, price } = req.body
 
         // Переносим картинку из временной папки
         if (image) {
@@ -92,15 +96,26 @@ const updateProduct = async (
             )
         }
 
+        const update: Record<string, unknown> = {}
+        if (title !== undefined) {
+            update.title = title
+        }
+        if (category !== undefined) {
+            update.category = category
+        }
+        if (description !== undefined) {
+            update.description = sanitizeProductDescription(description)
+        }
+        if (price !== undefined) {
+            update.price = price || null
+        }
+        if (image !== undefined) {
+            update.image = image
+        }
+
         const product = await Product.findByIdAndUpdate(
             productId,
-            {
-                $set: {
-                    ...req.body,
-                    price: req.body.price ? req.body.price : null,
-                    image: req.body.image ? req.body.image : undefined,
-                },
-            },
+            { $set: update },
             { runValidators: true, new: true }
         ).orFail(() => new NotFoundError('Нет товара по заданному id'))
         return res.send(product)

@@ -8,7 +8,12 @@ import BadRequestError from '../errors/bad-request-error'
 import ConflictError from '../errors/conflict-error'
 import NotFoundError from '../errors/not-found-error'
 import UnauthorizedError from '../errors/unauthorized-error'
+import { generateCsrfToken } from '../middlewares/csrf'
 import User from '../models/user'
+
+const getCsrfToken = (req: Request, res: Response) => {
+    res.json({ csrfToken: generateCsrfToken(req, res) })
+}
 
 // POST /auth/login
 const login = async (req: Request, res: Response, next: NextFunction) => {
@@ -191,9 +196,27 @@ const updateCurrentUser = async (
     next: NextFunction
 ) => {
     const userId = res.locals.user._id
+    const { name, email, password } = req.body as {
+        name?: string
+        email?: string
+        password?: string
+    }
+    const update: { name?: string; email?: string; password?: string } = {}
+
+    if (name !== undefined) {
+        update.name = name
+    }
+    if (email !== undefined) {
+        update.email = email
+    }
+    if (password !== undefined) {
+        update.password = password
+    }
+
     try {
-        const updatedUser = await User.findByIdAndUpdate(userId, req.body, {
+        const updatedUser = await User.findByIdAndUpdate(userId, update, {
             new: true,
+            runValidators: true,
         }).orFail(
             () =>
                 new NotFoundError(
@@ -207,6 +230,7 @@ const updateCurrentUser = async (
 }
 
 export {
+    getCsrfToken,
     getCurrentUser,
     getCurrentUserRoles,
     login,

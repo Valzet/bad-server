@@ -1,8 +1,7 @@
 import { Joi, celebrate } from 'celebrate'
 import { Types } from 'mongoose'
 
-// eslint-disable-next-line no-useless-escape
-export const phoneRegExp = /^(\+\d+)?(?:\s|-?|\(?\d+\)?)+$/
+export const phoneRegExp = /^[\d\s+()-]{7,20}$/
 
 export enum PaymentType {
     Card = 'card',
@@ -13,6 +12,7 @@ export enum PaymentType {
 export const validateOrderBody = celebrate({
     body: Joi.object().keys({
         items: Joi.array()
+            .max(50)
             .items(
                 Joi.string().custom((value, helpers) => {
                     if (Types.ObjectId.isValid(value)) {
@@ -44,7 +44,7 @@ export const validateOrderBody = celebrate({
         total: Joi.number().required().messages({
             'string.empty': 'Не указана сумма заказа',
         }),
-        comment: Joi.string().optional().allow(''),
+        comment: Joi.string().max(1000).optional().allow(''),
     }),
 })
 
@@ -72,19 +72,48 @@ export const validateProductBody = celebrate({
 })
 
 export const validateProductUpdateBody = celebrate({
-    body: Joi.object().keys({
-        title: Joi.string().min(2).max(30).messages({
-            'string.min': 'Минимальная длина поля "name" - 2',
-            'string.max': 'Максимальная длина поля "name" - 30',
-        }),
-        image: Joi.object().keys({
-            fileName: Joi.string().required(),
-            originalName: Joi.string().required(),
-        }),
-        category: Joi.string(),
-        description: Joi.string(),
-        price: Joi.number().allow(null),
-    }),
+    body: Joi.object()
+        .keys({
+            title: Joi.string().min(2).max(30).messages({
+                'string.min': 'Минимальная длина поля 2',
+                'string.max': 'Максимальная длина поля 30',
+            }),
+            image: Joi.object().keys({
+                fileName: Joi.string().required(),
+                originalName: Joi.string().required(),
+            }),
+            category: Joi.string(),
+            description: Joi.string(),
+            price: Joi.number().allow(null),
+        })
+        .min(1),
+})
+
+export const validateUpdateUserBody = celebrate({
+    body: Joi.object()
+        .keys({
+            name: Joi.string().min(2).max(30).messages({
+                'string.min': 'Минимальная длина поля 2',
+                'string.max': 'Максимальная длина поля 30',
+            }),
+            email: Joi.string().email().message('Нужен валидный email'),
+            password: Joi.string().min(6).messages({
+                'string.min': 'Минимальная длина поля 6',
+            }),
+        })
+        .min(1),
+})
+
+export const validateUpdateCustomerBody = celebrate({
+    body: Joi.object()
+        .keys({
+            name: Joi.string().min(2).max(30).messages({
+                'string.min': 'Минимальная длина поля 2',
+                'string.max': 'Максимальная длина поля 30',
+            }),
+            phone: Joi.string().pattern(phoneRegExp),
+        })
+        .min(1),
 })
 
 export const validateObjId = celebrate({
