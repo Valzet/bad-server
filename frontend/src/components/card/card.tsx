@@ -1,4 +1,5 @@
 import clsx from 'clsx'
+import DOMPurify from 'dompurify'
 import { ElementType } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useActionCreators } from '../../services/hooks'
@@ -64,7 +65,12 @@ export default function Card({
                             {category}
                         </span>
                         <h2 className={styles.card__title}>{title}</h2>
-                        <p className={styles.card__text}>{description}</p>
+                        <div
+                            className={styles.card__text}
+                            dangerouslySetInnerHTML={{
+                                __html: DOMPurify.sanitize(description),
+                            }}
+                        />
                     </>
                 )}
                 <div className={styles.card__row}>
