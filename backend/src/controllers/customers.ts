@@ -3,6 +3,16 @@ import { FilterQuery } from 'mongoose'
 import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
+import escapeRegExp from '../utils/escapeRegExp'
+import { buildSort } from '../utils/pagination'
+
+const CUSTOMER_SORT_FIELDS = [
+    'createdAt',
+    'totalAmount',
+    'orderCount',
+    'name',
+    'lastOrderDate',
+] as const
 
 // TODO: Добавить guard admin
 // eslint-disable-next-line max-len
@@ -91,8 +101,8 @@ export const getCustomers = async (
             }
         }
 
-        if (search) {
-            const searchRegex = new RegExp(search as string, 'i')
+        if (search && typeof search === 'string') {
+            const searchRegex = new RegExp(escapeRegExp(search), 'i')
             const orders = await Order.find(
                 {
                     $or: [{ deliveryAddress: searchRegex }],
@@ -108,11 +118,12 @@ export const getCustomers = async (
             ]
         }
 
-        const sort: { [key: string]: any } = {}
-
-        if (sortField && sortOrder) {
-            sort[sortField as string] = sortOrder === 'desc' ? -1 : 1
-        }
+        const sort = buildSort(
+            sortField,
+            sortOrder,
+            CUSTOMER_SORT_FIELDS,
+            'createdAt'
+        )
 
         const options = {
             sort,
