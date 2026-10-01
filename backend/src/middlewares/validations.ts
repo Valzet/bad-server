@@ -12,6 +12,7 @@ export enum PaymentType {
 export const validateOrderBody = celebrate({
     body: Joi.object().keys({
         items: Joi.array()
+            .max(50)
             .items(
                 Joi.string().custom((value, helpers) => {
                     if (Types.ObjectId.isValid(value)) {
@@ -43,7 +44,7 @@ export const validateOrderBody = celebrate({
         total: Joi.number().required().messages({
             'string.empty': 'Не указана сумма заказа',
         }),
-        comment: Joi.string().optional().allow(''),
+        comment: Joi.string().max(1000).optional().allow(''),
     }),
 })
 

@@ -4,7 +4,7 @@ import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
 import escapeRegExp from '../utils/escapeRegExp'
-import { buildSort } from '../utils/pagination'
+import { buildSort, parseLimit, parsePage } from '../utils/pagination'
 
 const CUSTOMER_SORT_FIELDS = [
     'createdAt',
@@ -124,11 +124,13 @@ export const getCustomers = async (
             CUSTOMER_SORT_FIELDS,
             'createdAt'
         )
+        const pageNumber = parsePage(page)
+        const pageLimit = parseLimit(limit)
 
         const options = {
             sort,
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (pageNumber - 1) * pageLimit,
+            limit: pageLimit,
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -148,15 +150,15 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(limit))
+        const totalPages = Math.ceil(totalUsers / pageLimit)
 
         res.status(200).json({
             customers: users,
             pagination: {
                 totalUsers,
                 totalPages,
-                currentPage: Number(page),
-                pageSize: Number(limit),
+                currentPage: pageNumber,
+                pageSize: pageLimit,
             },
         })
     } catch (error) {
